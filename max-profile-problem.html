@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Max Profit Problem - Task 3</title>
+        <style>
+            table {
+            border-collapse: collapse;
+            width: 80%;
+            margin: 20px auto;
+            font-family: Arial, sans-serif;
+            }
+            th, td {
+            border: 1px solid #444;
+            padding: 10px;
+            text-align: left;
+            }
+            th {
+            background-color: #f4f4f4;
+            }
+            .solution {
+            margin-top: 6px;
+            }
+        </style>
+    </head>
+    <body>
+
+    <table id="resultsTable">
+        <thead>
+        <tr>
+            <th>Test Case</th>
+            <th>Time Unit</th>
+            <th>Earnings</th>
+            <th>Solutions</th>
+        </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <script>
+        function calculateAllBestEarnings(totalTime) {
+        const buildings = [
+            { name: 'T', time: 5, earning: 1500 },
+            { name: 'P', time: 4, earning: 1000 },
+            { name: 'C', time: 10, earning: 3000 }
+        ];
+
+        const memo = {};
+
+        function dfs(currentTime, sequence) {
+            const key = currentTime + "|" + sequence.map(b => b.name).join("");
+            if (memo[key]) return memo[key];
+
+            let maxProfit = 0;
+            let paths = [];
+
+            for (const b of buildings) {
+            const endTime = currentTime + b.time;
+            if (endTime <= totalTime) {
+                const earning = (totalTime - endTime) * b.earning;
+                const next = dfs(endTime, [...sequence, b]);
+
+                const total = earning + next.maxProfit;
+                if (total > maxProfit) {
+                maxProfit = total;
+                paths = [[b, ...next.path]];
+                } else if (total === maxProfit) {
+                paths.push([b, ...next.path]);
+                }
+            }
+            }
+
+            memo[key] = { maxProfit, path: paths };
+            return memo[key];
+        }
+
+        const result = dfs(0, []);
+        const solutions = result.path.map(path => {
+            const counts = { T: 0, P: 0, C: 0 };
+            path.forEach(b => counts[b.name]++);
+            return `T: ${counts.T} P: ${counts.P} C: ${counts.C}`;
+        });
+
+        const uniqueSolutions = [...new Set(solutions)];
+
+        return {
+            maxProfit: result.maxProfit,
+            solutions: uniqueSolutions
+        };
+        }
+
+        function populateTable() {
+        const testCases = [7, 8, 13];
+        const tbody = document.querySelector("#resultsTable tbody");
+
+        testCases.forEach((timeUnit, index) => {
+            const { maxProfit, solutions } = calculateAllBestEarnings(timeUnit);
+
+            const row = document.createElement("tr");
+            row.innerHTML = `
+            <td>Test Case ${index + 1}</td>
+            <td>${timeUnit}</td>
+            <td>$${maxProfit}</td>
+            <td>
+                ${solutions.map((s, i) => `<div class="solution">${i + 1}. ${s}</div>`).join("")}
+            </td>
+            `;
+
+            tbody.appendChild(row);
+        });
+        }
+
+        populateTable();
+    </script>
+    </body>
+</html>

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Water Tank Problem - Task 1</title>
+        <style>
+            body {
+            font-family: sans-serif;
+            padding: 20px;
+            text-align: center;
+            }
+            table {
+            border-collapse: collapse;
+            margin: auto;
+            }
+            td {
+            width: 30px;
+            height: 30px;
+            border: 1px solid #444;
+            }
+            .water {
+            background-color: deepskyblue;
+            }
+        </style>
+    </head>
+    <body>
+        <h2>Water Tank Problem</h2>
+        <p>Input: <code>[0,4,0,0,0,6,0,6,4,0]</code></p>
+        <p><strong>Output:</strong> <span id="output"></span> Units</p>
+        <div id="grid"></div>
+
+        <script>
+            const heights = [0, 4, 0, 0, 0, 6, 0, 6, 4, 0];
+            const maxH = Math.max(...heights);
+            const gridContainer = document.getElementById("grid");
+
+            let leftMax = [], rightMax = [], water = [];
+            let totalWater = 0;
+
+            for (let i = 0; i < heights.length; i++) {
+            leftMax[i] = i === 0 ? heights[i] : Math.max(leftMax[i - 1], heights[i]);
+            }
+            for (let i = heights.length - 1; i >= 0; i--) {
+            rightMax[i] = i === heights.length - 1 ? heights[i] : Math.max(rightMax[i + 1], heights[i]);
+            }
+
+            for (let i = 0; i < heights.length; i++) {
+            water[i] = Math.max(0, Math.min(leftMax[i], rightMax[i]) - heights[i]);
+            totalWater += water[i];
+            }
+
+            const table = document.createElement("table");
+
+            for (let row = maxH; row > 0; row--) {
+            const tr = document.createElement("tr");
+            for (let col = 0; col < heights.length; col++) {
+                const td = document.createElement("td");
+
+                if (heights[col] + water[col] >= row && heights[col] < row) {
+                td.className = "water";
+                }
+
+                tr.appendChild(td);
+            }
+            table.appendChild(tr);
+            }
+
+            gridContainer.appendChild(table);
+            document.getElementById("output").textContent = totalWater;
+        </script>
+    </body>
+</html>
