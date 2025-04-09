@@ -25,92 +25,143 @@
     </head>
     <body>
 
-    <table id="resultsTable">
-        <thead>
-        <tr>
-            <th>Test Case</th>
-            <th>Time Unit</th>
-            <th>Earnings</th>
-            <th>Solutions</th>
-        </tr>
-        </thead>
-        <tbody></tbody>
-    </table>
+    <h2>Land Development Profit Calculator</h2>
 
-    <script>
-        function calculateAllBestEarnings(totalTime) {
-        const buildings = [
-            { name: 'T', time: 5, earning: 1500 },
-            { name: 'P', time: 4, earning: 1000 },
-            { name: 'C', time: 10, earning: 3000 }
-        ];
+<form id="buildingForm">
+  <div>
+    <label>Building T: </label>
+    Name: <input type="text" value="T" required id="nameT" />
+    Time: <input type="number" value="5" required id="timeT" />
+    Earning: <input type="number" value="1500" required id="earningT" />
+  </div>
+  <div>
+    <label>Building P: </label>
+    Name: <input type="text" value="P" required id="nameP" />
+    Time: <input type="number" value="4" required id="timeP" />
+    Earning: <input type="number" value="1000" required id="earningP" />
+  </div>
+  <div>
+    <label>Building C: </label>
+    Name: <input type="text" value="C" required id="nameC" />
+    Time: <input type="number" value="10" required id="timeC" />
+    Earning: <input type="number" value="3000" required id="earningC" />
+  </div>
+  <button type="submit">Calculate</button>
+</form>
 
-        const memo = {};
+<br />
 
-        function dfs(currentTime, sequence) {
-            const key = currentTime + "|" + sequence.map(b => b.name).join("");
-            if (memo[key]) return memo[key];
+<table id="resultsTable" border="1" cellspacing="0" cellpadding="5">
+  <thead>
+    <tr>
+      <th>Test Case</th>
+      <th>Time Unit</th>
+      <th>Earnings</th>
+      <th>Solutions</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
 
-            let maxProfit = 0;
-            let paths = [];
+<script>
+  document.getElementById("buildingForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+    const buildings = [
+      {
+        name: document.getElementById("nameT").value.trim(),
+        time: parseInt(document.getElementById("timeT").value),
+        earning: parseInt(document.getElementById("earningT").value)
+      },
+      {
+        name: document.getElementById("nameP").value.trim(),
+        time: parseInt(document.getElementById("timeP").value),
+        earning: parseInt(document.getElementById("earningP").value)
+      },
+      {
+        name: document.getElementById("nameC").value.trim(),
+        time: parseInt(document.getElementById("timeC").value),
+        earning: parseInt(document.getElementById("earningC").value)
+      }
+    ];
 
-            for (const b of buildings) {
-            const endTime = currentTime + b.time;
-            if (endTime <= totalTime) {
-                const earning = (totalTime - endTime) * b.earning;
-                const next = dfs(endTime, [...sequence, b]);
+    // Validate inputs
+    if (buildings.some(b => !b.name || isNaN(b.time) || isNaN(b.earning) || b.time < 0 || b.earning < 0)) {
+      alert("Please fill in all fields with valid non-negative numbers.");
+      return;
+    }
 
-                const total = earning + next.maxProfit;
-                if (total > maxProfit) {
-                maxProfit = total;
-                paths = [[b, ...next.path]];
-                } else if (total === maxProfit) {
-                paths.push([b, ...next.path]);
-                }
-            }
-            }
+    populateTable(buildings);
+  });
 
-            memo[key] = { maxProfit, path: paths };
-            return memo[key];
+  function calculateAllBestEarnings(totalTime, buildings) {
+    const memo = {};
+
+    function dfs(currentTime, sequence) {
+      const key = currentTime + "|" + sequence.map(b => b.name).join("");
+      if (memo[key]) return memo[key];
+
+      let maxProfit = 0;
+      let paths = [];
+
+      for (const b of buildings) {
+        const endTime = currentTime + b.time;
+        if (endTime <= totalTime) {
+          const earning = (totalTime - endTime) * b.earning;
+          const next = dfs(endTime, [...sequence, b]);
+          const total = earning + next.maxProfit;
+
+          if (total > maxProfit) {
+            maxProfit = total;
+            paths = [[b, ...next.path]];
+          } else if (total === maxProfit) {
+            paths.push([b, ...next.path]);
+          }
         }
+      }
 
-        const result = dfs(0, []);
-        const solutions = result.path.map(path => {
-            const counts = { T: 0, P: 0, C: 0 };
-            path.forEach(b => counts[b.name]++);
-            return `T: ${counts.T} P: ${counts.P} C: ${counts.C}`;
-        });
+      memo[key] = { maxProfit, path: paths };
+      return memo[key];
+    }
 
-        const uniqueSolutions = [...new Set(solutions)];
+    const result = dfs(0, []);
+    const solutions = result.path.map(path => {
+      const counts = {};
+      buildings.forEach(b => (counts[b.name] = 0));
+      path.forEach(b => counts[b.name]++);
+      return Object.entries(counts)
+        .map(([name, count]) => `${name}: ${count}`)
+        .join(" ");
+    });
 
-        return {
-            maxProfit: result.maxProfit,
-            solutions: uniqueSolutions
-        };
-        }
+    const uniqueSolutions = [...new Set(solutions)];
 
-        function populateTable() {
-        const testCases = [7, 8, 13];
-        const tbody = document.querySelector("#resultsTable tbody");
+    return {
+      maxProfit: result.maxProfit,
+      solutions: uniqueSolutions
+    };
+  }
 
-        testCases.forEach((timeUnit, index) => {
-            const { maxProfit, solutions } = calculateAllBestEarnings(timeUnit);
+  function populateTable(buildings) {
+    const testCases = [7, 8, 13];
+    const tbody = document.querySelector("#resultsTable tbody");
+    tbody.innerHTML = ""; // Clear previous results
 
-            const row = document.createElement("tr");
-            row.innerHTML = `
-            <td>Test Case ${index + 1}</td>
-            <td>${timeUnit}</td>
-            <td>$${maxProfit}</td>
-            <td>
-                ${solutions.map((s, i) => `<div class="solution">${i + 1}. ${s}</div>`).join("")}
-            </td>
-            `;
+    testCases.forEach((timeUnit, index) => {
+      const { maxProfit, solutions } = calculateAllBestEarnings(timeUnit, buildings);
 
-            tbody.appendChild(row);
-        });
-        }
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td>Test Case ${index + 1}</td>
+        <td>${timeUnit}</td>
+        <td>$${maxProfit}</td>
+        <td>
+          ${solutions.map((s, i) => `<div class="solution">${i + 1}. ${s}</div>`).join("")}
+        </td>
+      `;
 
-        populateTable();
-    </script>
+      tbody.appendChild(row);
+    });
+  }
+</script>
     </body>
 </html>
