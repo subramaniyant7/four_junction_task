@@ -68,7 +68,14 @@
             }
 
             const table = document.createElement("table");
+            const firsttr = document.createElement("tr");
+            for (let col = 0; col < heights.length; col++) {
+                const td = document.createElement("td");
+                firsttr.appendChild(td);
+            }
+            table.appendChild(firsttr);
 
+            
             for (let row = maxH; row > 0; row--) {
             const tr = document.createElement("tr");
             for (let col = 0; col < heights.length; col++) {

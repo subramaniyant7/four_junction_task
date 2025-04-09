@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Max Profit Calculator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        input, button {
+            padding: 8px;
+            margin: 5px 0;
+        }
+        #result {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Max Profit Calculator</h1>
+    <div>
+        <label for="timeUnits">Enter Time Units:</label>
+        <input type="number" id="timeUnits" min="1" value="7">
+        <button onclick="calculate()">Calculate</button>
+    </div>
+    <div id="result"></div>
+
+    <script>
+        function calculateMaxProfit(timeUnits) {
+            const properties = [
+                { type: 'T', time: 5, earning: 1500 },
+                { type: 'P', time: 4, earning: 1000 },
+                { type: 'C', time: 10, earning: 3000 }
+            ].sort((a, b) => (b.earning/b.time) - (a.earning/a.time));
+
+            let maxEarning = 0;
+            let solutions = [];
+
+            function backtrack(remainingTime, path, currentEarning) {
+                if (currentEarning + remainingTime * properties[0].earning <= maxEarning) {
+                    return;
+                }
+
+                let added = false;
+                for (const prop of properties) {
+                    if (remainingTime >= prop.time) {
+                        const newRemainingTime = remainingTime - prop.time;
+                        const operationalTime = newRemainingTime;
+                        const newEarning = currentEarning + operationalTime * prop.earning;
+                        backtrack(newRemainingTime, [...path, prop.type], newEarning);
+                        added = true;
+                    }
+                }
+
+                if (!added) {
+                    if (currentEarning > maxEarning) {
+                        maxEarning = currentEarning;
+                        solutions = [path];
+                    } else if (currentEarning === maxEarning) {
+                        solutions.push(path);
+                    }
+                }
+            }
+
+            backtrack(timeUnits, [], 0);
+
+            const solutionCounts = [];
+            for (const solution of solutions) {
+                const counts = { T: 0, P: 0, C: 0 };
+                for (const prop of solution) {
+                    counts[prop]++;
+                }
+                solutionCounts.push(counts);
+            }
+
+            const uniqueSolutions = [];
+            const seen = new Set();
+            for (const counts of solutionCounts) {
+                const key = `${counts.T},${counts.P},${counts.C}`;
+                if (!seen.has(key)) {
+                    seen.add(key);
+                    uniqueSolutions.push(counts);
+                }
+            }
+
+            return {
+                earnings: maxEarning,
+                solutions: uniqueSolutions.map(sol => `T: ${sol.T} P: ${sol.P} C: ${sol.C}`)
+            };
+        }
+
+        function calculate() {
+            const timeUnits = parseInt(document.getElementById('timeUnits').value);
+            if (isNaN(timeUnits) || timeUnits < 1) {
+                alert('Please enter a valid positive number');
+                return;
+            }
+
+            const result = calculateMaxProfit(timeUnits);
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = `
+                <h3>Time Unit: ${timeUnits}</h3>
+                <p>Earnings: $${result.earnings}</p>
+                <p>Solutions:</p>
+                <ul>
+                    ${result.solutions.map(sol => `<li>${sol}</li>`).join('')}
+                </ul>
+            `;
+        }
+        window.onload = calculate;
+    </script>
+</body>
+</html>
